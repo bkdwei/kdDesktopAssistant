@@ -10,7 +10,7 @@ except Exception as e:
 import webbrowser,os,subprocess
 from PyQt5.QtWidgets import QWidget,QSizePolicy,QPushButton,QLabel,QVBoxLayout,QMenu,QAction,QMessageBox
 from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal
-from PyQt5.QtGui import QIcon,QCursor
+from PyQt5.QtGui import QIcon,QCursor,QPalette
 from .fileutil import get_file_realpath 
 from . import app_data
 class launch_item(QWidget):
@@ -45,6 +45,10 @@ class launch_item(QWidget):
 #             self.label.setWordWrap(True)
             self.label.setSizePolicy(sizePolicy)
             self.label.setMaximumSize(QSize(150, 50))
+            pe = QPalette()
+#             self.label.setAutoFillBackground(True)
+            pe.setColor(QPalette.WindowText,Qt.white)
+            self.label.setPalette(pe)
             
             self.verticalLayout = QVBoxLayout(self)
             self.verticalLayout.addWidget(self.pushButton,0,Qt.AlignCenter)

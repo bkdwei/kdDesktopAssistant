@@ -10,7 +10,7 @@ from urllib import parse,request
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import QDialog,QFileDialog, QMessageBox
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import QEvent, pyqtSlot,QSize
+from PyQt5.QtCore import QEvent, pyqtSlot
 from .fileutil import get_file_realpath
 
 
