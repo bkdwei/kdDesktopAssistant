@@ -3,7 +3,11 @@ Created on 2019年3月30日
 
 @author: bkd
 '''
-import webbrowser
+try:
+    from os import startfile
+except Exception as e:
+    pass
+import webbrowser,os,subprocess
 from PyQt5.QtWidgets import QWidget,QSizePolicy,QPushButton,QLabel,QVBoxLayout,QMenu,QAction,QMessageBox
 from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal
 from PyQt5.QtGui import QIcon,QCursor
@@ -24,7 +28,7 @@ class launch_item(QWidget):
             self.setSizePolicy(sizePolicy)
             
             self.setMinimumSize(QSize(200, 100))
-            self.setMaximumSize(QSize(100, 200))
+            self.setMaximumSize(QSize(200, 200))
             
             self.pushButton = QPushButton(self)
             if not item["ico"]:
@@ -38,7 +42,9 @@ class launch_item(QWidget):
             
             self.label = QLabel(self)
             self.label.setText(item["name"])
-            self.label.setWordWrap(True)
+#             self.label.setWordWrap(True)
+            self.label.setSizePolicy(sizePolicy)
+            self.label.setMaximumSize(QSize(150, 50))
             
             self.verticalLayout = QVBoxLayout(self)
             self.verticalLayout.addWidget(self.pushButton,0,Qt.AlignCenter)
@@ -50,9 +56,16 @@ class launch_item(QWidget):
             self.menu_item =[QAction("修改"),QAction("删除")]
         def on_clicked(self):
             url = self.item["url"]
-            if not "http" in url :
-                url = "http://" + url
-            webbrowser.open_new_tab(url)
+            item_type = self.item["type"]
+            if item_type == 1 :
+                if not "http" in url :
+                    url = "http://" + url
+                webbrowser.open_new_tab(url)
+            elif item_type in( 2,4) :
+                if os.name == "nt":
+                    os.startfile(url)
+                elif os.name == "posix":
+                    subprocess.call(["xdg-open", url])
         def handle_pop_menu(self):
             action = self.item_popup_menu.exec_(self.menu_item,QCursor.pos())
             if action:

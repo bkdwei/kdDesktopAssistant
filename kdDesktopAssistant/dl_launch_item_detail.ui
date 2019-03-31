@@ -54,7 +54,13 @@
       </sizepolicy>
      </property>
      <property name="text">
-      <string>图标1</string>
+      <string>.</string>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>64</width>
+       <height>64</height>
+      </size>
      </property>
     </widget>
    </item>
@@ -85,7 +91,7 @@
     </widget>
    </item>
    <item row="3" column="0">
-    <widget class="QPushButton" name="pushButton_2">
+    <widget class="QPushButton" name="pb_url">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
        <horstretch>0</horstretch>

@@ -116,5 +116,6 @@ def main():
     app = QApplication(sys.argv)
     win = kdDesktopAssistant()
 #     win.showFullScreen()
-    win.show()
+    win.showMaximized()
+#     win.show()
     sys.exit(app.exec_())
