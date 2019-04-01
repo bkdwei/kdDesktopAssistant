@@ -18,9 +18,12 @@ def get_option_int(key):
 def set_home_session(session_name):
     cf.set("global","home_session",session_name)
     cf.write(open(config_file,"w"))
+    cf.read(config_file)
 def set_web_mode(mode):
     cf.set("global","web_as_application",str(mode))
     cf.write(open(config_file,"w"))
+    cf.read(config_file)
 def set_item_size(size):
     cf.set("global","item_size",str(size))
     cf.write(open(config_file,"w"))
+    cf.read(config_file)

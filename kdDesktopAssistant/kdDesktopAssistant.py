@@ -3,7 +3,7 @@ Created on 2019年3月30日
 
 @author: bkd
 '''
-import  sys,os
+import  sys,os,math
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import  QIcon,QCursor
 from PyQt5.QtCore import Qt,QPoint,QSize
@@ -14,6 +14,7 @@ from .dl_launch_item_detail import dl_launch_item_detail
 from .session import session
 from . import app_data
 from  .kdconfig import set_home_session,set_web_mode,get_option_value,get_option_int
+from .kdconfig import get_option_boolean
 class kdDesktopAssistant(QMainWindow):
 
     def __init__(self):
@@ -43,7 +44,9 @@ class kdDesktopAssistant(QMainWindow):
         self.session_bt_size_policy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.session_btn_size = QSize(100, 25)
 #         初始化桌面
-        self.vetical_widget_number = QDesktopWidget().screenGeometry().height() / get_option_int("item_size")
+        print(QDesktopWidget().screenGeometry().height())
+        print(self.gl_apps.geometry().height())
+        self.vetical_widget_number = math.floor((QDesktopWidget().screenGeometry().height() - 250) / get_option_int("item_size"))
         self.home_session = get_option_value("home_session")
         self.init_session()
         
@@ -66,7 +69,7 @@ class kdDesktopAssistant(QMainWindow):
                 
             item["ico"] = self.dl_launch_item_detail.ico_path
             item["name"] = self.dl_launch_item_detail.le_name.text()
-            item["url"] = self.dl_launch_item_detail.le_url.text()
+            item["url"] = self.dl_launch_item_detail.le_url.text().strip()
             item["type"] = self.dl_launch_item_detail.bg_type.checkedButton().type
             item["session_id"] = self.cur_session["id"]
             try :
@@ -93,18 +96,18 @@ class kdDesktopAssistant(QMainWindow):
                 
             item["name"] = self.session.le_name.text()
             item["picture"] = self.session.le_picture.text()
-        try :
-            if item["id"]:
-                app_data.update_session(item)
-                self.setStyleSheet("#MainWindow{border-image:url("+item["picture"] + ");}")
-#                 widget.update_item(item)
-            else:
-                app_data.insert_session_item(item)
-                self.add_session(item)
-            QMessageBox.information(None, promt_info + "桌面",  promt_info + "桌面成功" , QMessageBox.Yes)
-        except Exception as e:
-            QMessageBox.warning(None, promt_info + "桌面失败",   str(e), QMessageBox.Yes)
-            raise e
+            try :
+                if item["id"]:
+                    app_data.update_session(item)
+                    self.setStyleSheet("#MainWindow{border-image:url("+item["picture"] + ");}")
+    #                 widget.update_item(item)
+                else:
+                    app_data.insert_session_item(item)
+                    self.add_session(item)
+                QMessageBox.information(None, promt_info + "桌面",  promt_info + "桌面成功" , QMessageBox.Yes)
+            except Exception as e:
+                QMessageBox.warning(None, promt_info + "桌面失败",   str(e), QMessageBox.Yes)
+                raise e
     def add_launch_item(self,item):
         li = launch_item(item)
         li.del_item_signal.connect(self.remove_item)
@@ -192,7 +195,7 @@ class kdDesktopAssistant(QMainWindow):
                 set_home_session(self.cur_session["name"])
                 QMessageBox.information(self, "主桌面设置", "设置为主桌面成功")
             elif action_text == "小程序模式" :
-                web_as_application = get_option_value("web_as_application")
+                web_as_application = get_option_boolean("web_as_application")
                 set_web_mode(not web_as_application)
                 if not web_as_application:
                     QMessageBox.information(self, "启动小程序模式", "每个网页将作为一个应用程序打开")

@@ -93,7 +93,7 @@ class dl_launch_item_detail(QDialog):
         if qtype == QEvent.FocusOut :
             if not self.rb_url.isChecked():
                 return
-            url = self.le_url.text()
+            url = self.le_url.text().strip()
             if not "http" in url :
                 url = "http://" + url
             parsed_url_dict = parse.urlsplit(url)

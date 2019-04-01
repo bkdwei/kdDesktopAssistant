@@ -63,7 +63,7 @@ class launch_item(QWidget):
             self.customContextMenuRequested[QPoint].connect(self.handle_pop_menu)
             self.menu_item =[QAction("修改"),QAction("删除")]
         def on_clicked(self):
-            url = self.item["url"]
+            url = self.item["url"].strip()
             item_type = self.item["type"]
             if item_type == 1 :
                 if not "http" in url :

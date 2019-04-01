@@ -40,7 +40,7 @@ def update_launch_item(item):
     conn = init_connection()
     cs = conn.cursor()
     print("update item:" ,item)
-    cs.execute("update launch_item set ico = ?, name = ?, url = ?, type = ?, session_id = ? where id = ? ",(item["ico"],item["name"],item["url"],item["type"],item["id"], item["session_id"]))
+    cs.execute("update launch_item set ico = ?, name = ?, url = ?, type = ?, session_id = ? where id = ? ",(item["ico"],item["name"],item["url"],item["type"],item["session_id"], item["id"]))
     conn.commit()
 
 def insert_session_item(item):
