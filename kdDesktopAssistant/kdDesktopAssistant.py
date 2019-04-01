@@ -7,7 +7,7 @@ import  sys,os
 from PyQt5.uic import loadUi
 from PyQt5.QtGui import  QIcon,QPalette,QBrush,QPixmap,QCursor
 from PyQt5.QtCore import Qt,QPoint,QSize
-from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QLineEdit,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton
+from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QLineEdit,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon
 from .fileutil import  get_file_realpath
 from .launch_item import launch_item
 from .dl_launch_item_detail import dl_launch_item_detail
@@ -18,9 +18,10 @@ class kdDesktopAssistant(QMainWindow):
     def __init__(self):
         super().__init__()
         loadUi(get_file_realpath("kdDesktopAssistant.ui"), self)
+        icon = QIcon(get_file_realpath('data/image/logo.png'))
+        self.setWindowIcon(icon)
         palette = QPalette()
         palette.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/S60922-232638.jpg"))))
-        self.setWindowIcon(QIcon(get_file_realpath('data/image/logo.png')))
 #         self.setPalette(palette)
 #         self.gl_apps.setAutoFillBackground(True)
 #         self.setWindowOpacity(0.01)
@@ -32,6 +33,15 @@ class kdDesktopAssistant(QMainWindow):
         self.pop_menu_item = [QAction("新增启动项"),QAction("新增桌面"),QAction("删除桌面"),QAction("设置桌面背景"),QAction("设置为主页"),QAction("导出配置"),QAction("导入配置"),QAction("退出")]
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested[QPoint].connect(self.handle_pop_menu)
+        
+#         系统托盘
+        sys_tray = QSystemTrayIcon(self)
+        self.sys_tray = sys_tray
+        sys_tray.setIcon(icon)
+        sys_tray.activated.connect(self.sys_tray_handler)
+        sys_tray_menu = QMenu()
+        sys_tray_menu.menu_items   =[ QAction("退出",self,triggered=sys.exit)]
+        sys_tray.setContextMenu(sys_tray_menu)
         
 #         初始化数据库连接
 #         app_data.get_connection(get_file_realpath("data/db/kdDesktopAssistant.db"))
@@ -175,10 +185,27 @@ class kdDesktopAssistant(QMainWindow):
                     QMessageBox.information(self, "新增桌面", "新增桌面成功")
             elif action_text == "设置桌面背景" :
                 self.edit_session(self.cur_session)
+                
+    def toggle_window_status(self):
+        self.setVisible(not self.isVisible())
+        if self.isVisible() :
+            self.activateWindow()
+#             self.sys_tray.hide()
+    def sys_tray_handler(self,reason):
+        if reason ==  2 or reason == 3 :
+            self.toggle_window_status()
+        elif reason == 1 :
+            menu = self.sender().contextMenu()
+            menu.exec_(menu.menu_items,QCursor.pos()) 
+    def closeEvent(self,event):
+        self.hide()
+        self.sys_tray.show()
+        event.ignore()
 def main():
     app = QApplication(sys.argv)
     win = kdDesktopAssistant()
 #     win.showFullScreen()
 #     win.showMaximized()
     win.show()
+#     app.exec_()
     sys.exit(app.exec_())
