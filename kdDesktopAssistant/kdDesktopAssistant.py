@@ -5,14 +5,15 @@ Created on 2019年3月30日
 '''
 import  sys,os
 from PyQt5.uic import loadUi
-from PyQt5.QtGui import  QIcon,QPalette,QBrush,QPixmap,QColor
+from PyQt5.QtGui import  QIcon,QCursor
 from PyQt5.QtCore import Qt,QPoint,QSize
-from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QLineEdit,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon
+from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon,QDesktopWidget
 from .fileutil import  get_file_realpath
 from .launch_item import launch_item
 from .dl_launch_item_detail import dl_launch_item_detail
 from .session import session
 from . import app_data
+from  .kdconfig import set_home_session,set_web_mode,get_option_value,get_option_int
 class kdDesktopAssistant(QMainWindow):
 
     def __init__(self):
@@ -21,22 +22,12 @@ class kdDesktopAssistant(QMainWindow):
         icon = QIcon(get_file_realpath('data/image/logo.png'))
         self.setWindowIcon(icon)
         
-#         palette = QPalette()
-#         palette.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/S60922-232638.jpg"))))
-#         palette.setColor(QPalette.Background, QColor(0x00,0xff,0x00,0x00)); 
-#         self.setPalette(palette)
-#         self.gl_apps.setAutoFillBackground(True)
-#          窗体透明，控件不透明
-#         self.setWindowOpacity(0.4)
-#         self.setWindowFlags(Qt.Tool)
-#         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
-#         self.setAttribute(Qt.WA_TranslucentBackground)
+#         self.setStyleSheet("#MainWindow{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg").replace("\\","/") +");}")
         self.gl_apps.setAlignment(Qt.AlignTop)
-        self.setStyleSheet("#MainWindow{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg").replace("\\","/") +");}")
         
 #         右键菜单设置
         self.pop_menu = QMenu()
-        self.pop_menu_item = [QAction("新增启动项"),QAction("新增桌面"),QAction("删除桌面"),QAction("设置桌面背景"),QAction("设置为主页"),QAction("导出配置"),QAction("导入配置"),QAction("退出")]
+        self.pop_menu_item = [QAction("新增启动项"),QAction("新增桌面"),QAction("设置背景图片"),QAction("修改桌面"),QAction("删除桌面"),QAction("设置为主桌面"),QAction("小程序模式"),QAction("导出配置"),QAction("导入配置"),QAction("退出")]
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested[QPoint].connect(self.handle_pop_menu)
         
@@ -48,17 +39,15 @@ class kdDesktopAssistant(QMainWindow):
         sys_tray_menu = QMenu()
         sys_tray_menu.menu_items   =[ QAction("退出",self,triggered=sys.exit)]
         sys_tray.setContextMenu(sys_tray_menu)
-        
-#         初始化数据库连接
-#         app_data.get_connection(get_file_realpath("data/db/kdDesktopAssistant.db"))
-        self.row = 0
-        self.col = 0
-        self.sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        self.session_bt_size_policy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.session_btn_size = QSize(100, 25)
-        self.cur_session_id = None
-#         self.init_launch_items()
+#         初始化桌面
+        self.vetical_widget_number = QDesktopWidget().screenGeometry().height() / get_option_int("item_size")
+        self.home_session = get_option_value("home_session")
         self.init_session()
         
+#         初始化对话框对象
         self.dl_launch_item_detail = dl_launch_item_detail()
         self.session = session()
         
@@ -79,7 +68,7 @@ class kdDesktopAssistant(QMainWindow):
             item["name"] = self.dl_launch_item_detail.le_name.text()
             item["url"] = self.dl_launch_item_detail.le_url.text()
             item["type"] = self.dl_launch_item_detail.bg_type.checkedButton().type
-            item["session_id"] = self.cur_session_id
+            item["session_id"] = self.cur_session["id"]
             try :
                 if item["id"]:
                     app_data.update_launch_item(item)
@@ -121,22 +110,24 @@ class kdDesktopAssistant(QMainWindow):
         li.del_item_signal.connect(self.remove_item)
         li.edit_item_signal.connect(self.edit_lauchn_item)
         self.gl_apps.addWidget(li, self.row, self.col, 1, 1)
-        self.col += 1
-        if self.col >= 3:
-            self.col = 0
-            self.row += 1
-    def init_launch_items(self):
-        count = self.gl_apps.count()
+        self.row += 1
+        if self.row >= self.vetical_widget_number:
+            self.row = 0
+            self.col += 1
+    def init_launch_items(self,item):
+        self.cur_session = item
         self.row = 0
         self.col = 0
         
+#         清空gridlayout上的所有组件
+        count = self.gl_apps.count()
         print("gl_apps:" , count)
 #         一个老外给的方法，很棒。https://stackoverflow.com/questions/4528347/clear-all-widgets-in-a-layout-in-pyqt
         for i in reversed(range(count)) :
             self.gl_apps.itemAt(i).widget().setParent(None)
-        session_id = self.sender().session_id
-        picture = self.sender().picture
-        self.cur_session = self.sender().item
+            
+        session_id = item["id"]
+        picture = item["picture"]
         if picture :
             self.setStyleSheet("#MainWindow{border-image:url("+picture + ");}")
         print(session_id)
@@ -151,22 +142,27 @@ class kdDesktopAssistant(QMainWindow):
         for item in self.session_list:
             item_dict = app_data.tuple2dict_session(item)
             self.add_session(item_dict)
+            if item_dict["name"] == self.home_session :
+                self.init_launch_items(item_dict)
     def add_session(self,item):
+#         新建桌面按钮
         pb_session = QPushButton(item["name"])
-        pb_session.setSizePolicy(self.sizePolicy)
+        pb_session.setSizePolicy(self.session_bt_size_policy)
         pb_session.setMaximumSize(self.session_btn_size)
+#         设置桌面按钮为半透明
         op = QGraphicsOpacityEffect()  
         op.setOpacity(0.7)    
         pb_session.setGraphicsEffect(op)  
         pb_session.setAutoFillBackground(True)
 #         TODO 待删除
-        pb_session.session_id = item["id"]
-        pb_session.picture = item["picture"]
+#         pb_session.session_id = item["id"]
+#         pb_session.picture = item["picture"]
         pb_session.item = item
-        pb_session.clicked.connect(self.init_launch_items)
+        pb_session.clicked.connect(self.on_pb_session_clicked)
         self.hl_session.addWidget(pb_session)
-#         TODO 待修正
-        self.cur_session_id = item["id"]
+    def on_pb_session_clicked(self):
+        self.cur_session = self.sender().item
+        self.init_launch_items(self.cur_session)
     def handle_pop_menu(self):
         action = self.pop_menu.exec_(self.pop_menu_item,QCursor.pos())
         if action:
@@ -190,8 +186,20 @@ class kdDesktopAssistant(QMainWindow):
                     session_item["color"] = None
                     app_data.insert_session_item(session_item)
                     QMessageBox.information(self, "新增桌面", "新增桌面成功")
-            elif action_text == "设置桌面背景" :
+            elif action_text == "设置背景图片" :
                 self.edit_session(self.cur_session)
+            elif action_text == "设置为主桌面" :
+                set_home_session(self.cur_session["name"])
+                QMessageBox.information(self, "主桌面设置", "设置为主桌面成功")
+            elif action_text == "小程序模式" :
+                web_as_application = get_option_value("web_as_application")
+                set_web_mode(not web_as_application)
+                if not web_as_application:
+                    QMessageBox.information(self, "启动小程序模式", "每个网页将作为一个应用程序打开")
+                else :
+                    QMessageBox.information(self, "关闭小程序模式", "每个网页将作为一个标签也打开")
+                    
+                
                 
     def toggle_window_status(self):
         self.setVisible(not self.isVisible())
@@ -204,6 +212,8 @@ class kdDesktopAssistant(QMainWindow):
         elif reason == 1 :
             menu = self.sender().contextMenu()
             menu.exec_(menu.menu_items,QCursor.pos()) 
+        else :
+            sys.exit()
     def closeEvent(self,event):
         self.hide()
         self.sys_tray.show()

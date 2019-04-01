@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>548</width>
-    <height>303</height>
+    <height>304</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -151,7 +151,7 @@
      <item>
       <widget class="QRadioButton" name="rb_catelog">
        <property name="text">
-        <string>自定义文件夹</string>
+        <string>分类</string>
        </property>
        <attribute name="buttonGroup">
         <string notr="true">bg_type</string>

@@ -26,6 +26,11 @@ class dl_launch_item_detail(QDialog):
         self.rb_other.type = 4
         self.set_icon(get_file_realpath("data/image/firefox64.png"))
     @pyqtSlot()
+    def on_pb_icon_clicked(self):
+        filename, _ = QFileDialog.getOpenFileName(self,"选择背景文件",expanduser('~') ,"*")   #设置文件扩展名过滤,注意用双分号间隔
+        if filename:
+            self.set_icon(filename)
+    @pyqtSlot()
     def on_pb_url_clicked(self):
         if self.rb_dir.isChecked() :
             path = QFileDialog.getExistingDirectory(self, '选择文件夹', expanduser("~"))
@@ -89,6 +94,8 @@ class dl_launch_item_detail(QDialog):
             if not self.rb_url.isChecked():
                 return
             url = self.le_url.text()
+            if not "http" in url :
+                url = "http://" + url
             parsed_url_dict = parse.urlsplit(url)
             print("parsed_url_dict:" ,parsed_url_dict)
 
@@ -105,16 +112,19 @@ class dl_launch_item_detail(QDialog):
             print("favicon_path：" + favicon_url)
             favicon_path = get_file_realpath("data/image/netico/" + parsed_url_dict[1].replace(".","_") + ".ico")
             print("favicon_path:" + favicon_path)
-            self.ico_path = favicon_path
             if not exists(favicon_path):
                 print("正在下载网站logo")
                 try:
                     favicon = request.urlopen(favicon_url).read()
                     with open(favicon_path,"wb") as fp:
                         fp.write(favicon)
+                    self.set_icon(favicon_path)
+                    self.ico_path = favicon_path
                 except Exception as e:
-                    print(str(e)) 
-            icon = QIcon(favicon_path)
-            self.pb_icon.setIcon(icon)
+                    print("下载网站logo:" +str(e))
+            else :
+                self.set_icon(favicon_path)
+                self.ico_path = favicon_path
+                
         return False
         
