@@ -13,7 +13,6 @@ from .launch_item import launch_item
 from .dl_launch_item_detail import dl_launch_item_detail
 from .session import session
 from . import app_data
-from nltk import app
 class kdDesktopAssistant(QMainWindow):
 
     def __init__(self):
@@ -24,7 +23,7 @@ class kdDesktopAssistant(QMainWindow):
         self.setWindowIcon(QIcon(get_file_realpath('data/image/logo.png')))
 #         self.setPalette(palette)
 #         self.gl_apps.setAutoFillBackground(True)
-        self.setWindowOpacity(0.01)
+#         self.setWindowOpacity(0.01)
         self.gl_apps.setAlignment(Qt.AlignTop)
         self.setStyleSheet("#MainWindow{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg").replace("\\","/") +");}")
         
@@ -121,7 +120,8 @@ class kdDesktopAssistant(QMainWindow):
         session_id = self.sender().session_id
         picture = self.sender().picture
         self.cur_session = self.sender().item
-        self.setStyleSheet("#MainWindow{border-image:url("+picture + ");}")
+        if picture :
+            self.setStyleSheet("#MainWindow{border-image:url("+picture + ");}")
         print(session_id)
         if not session_id :
             return
@@ -179,6 +179,6 @@ def main():
     app = QApplication(sys.argv)
     win = kdDesktopAssistant()
 #     win.showFullScreen()
-    win.showMaximized()
-#     win.show()
+#     win.showMaximized()
+    win.show()
     sys.exit(app.exec_())
