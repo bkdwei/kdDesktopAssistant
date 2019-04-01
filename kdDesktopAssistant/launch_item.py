@@ -9,8 +9,12 @@ except Exception as e:
     pass
 import webbrowser,os,subprocess
 from PyQt5.QtWidgets import QWidget,QSizePolicy,QPushButton,QLabel,QVBoxLayout,QMenu,QAction,QMessageBox
-from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal
+from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal,QUrl
 from PyQt5.QtGui import QIcon,QCursor,QPalette
+try:
+    from PyQt5.QtWebEngineWidgets import QWebEngineView
+except Exception as e:
+    pass
 from .fileutil import get_file_realpath 
 from . import app_data
 class launch_item(QWidget):
@@ -64,7 +68,16 @@ class launch_item(QWidget):
             if item_type == 1 :
                 if not "http" in url :
                     url = "http://" + url
-                webbrowser.open_new_tab(url)
+#                 webbrowser.open_new_tab(url)
+                self.webapp = QWebEngineView()
+                self.webapp.load(QUrl(url))
+                if self.item["ico"]:
+                    try :
+                        print("ico path:" + self.item["ico"])
+                        self.webapp.setWindowIcon(QIcon(self.item["ico"]))
+                    except Exception as e:
+                        print("打开图标异常" +str(e))
+                self.webapp.show()
             elif item_type in( 2,4) :
                 if os.name == "nt":
                     os.startfile(url)

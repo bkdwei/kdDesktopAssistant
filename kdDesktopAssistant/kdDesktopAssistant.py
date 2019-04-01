@@ -5,7 +5,7 @@ Created on 2019年3月30日
 '''
 import  sys,os
 from PyQt5.uic import loadUi
-from PyQt5.QtGui import  QIcon,QPalette,QBrush,QPixmap,QCursor
+from PyQt5.QtGui import  QIcon,QPalette,QBrush,QPixmap,QColor
 from PyQt5.QtCore import Qt,QPoint,QSize
 from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QLineEdit,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon
 from .fileutil import  get_file_realpath
@@ -20,11 +20,17 @@ class kdDesktopAssistant(QMainWindow):
         loadUi(get_file_realpath("kdDesktopAssistant.ui"), self)
         icon = QIcon(get_file_realpath('data/image/logo.png'))
         self.setWindowIcon(icon)
-        palette = QPalette()
-        palette.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/S60922-232638.jpg"))))
+        
+#         palette = QPalette()
+#         palette.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/S60922-232638.jpg"))))
+#         palette.setColor(QPalette.Background, QColor(0x00,0xff,0x00,0x00)); 
 #         self.setPalette(palette)
 #         self.gl_apps.setAutoFillBackground(True)
-#         self.setWindowOpacity(0.01)
+#          窗体透明，控件不透明
+#         self.setWindowOpacity(0.4)
+#         self.setWindowFlags(Qt.Tool)
+#         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
+#         self.setAttribute(Qt.WA_TranslucentBackground)
         self.gl_apps.setAlignment(Qt.AlignTop)
         self.setStyleSheet("#MainWindow{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg").replace("\\","/") +");}")
         
@@ -55,6 +61,7 @@ class kdDesktopAssistant(QMainWindow):
         
         self.dl_launch_item_detail = dl_launch_item_detail()
         self.session = session()
+        
     def remove_item(self,item):
         item.setParent(None)
         self.gl_apps.removeWidget(item)

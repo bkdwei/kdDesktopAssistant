@@ -108,9 +108,12 @@ class dl_launch_item_detail(QDialog):
             self.ico_path = favicon_path
             if not exists(favicon_path):
                 print("正在下载网站logo")
-                favicon = request.urlopen(favicon_url).read()
-                with open(favicon_path,"wb") as fp:
-                    fp.write(favicon)
+                try:
+                    favicon = request.urlopen(favicon_url).read()
+                    with open(favicon_path,"wb") as fp:
+                        fp.write(favicon)
+                except Exception as e:
+                    print(str(e)) 
             icon = QIcon(favicon_path)
             self.pb_icon.setIcon(icon)
         return False
