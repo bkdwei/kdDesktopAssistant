@@ -5,9 +5,9 @@ Created on 2019年3月30日
 '''
 import  sys,os,math
 from PyQt5.uic import loadUi
-from PyQt5.QtGui import  QIcon,QCursor
-from PyQt5.QtCore import Qt,QPoint,QSize
-from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon,QDesktopWidget
+from PyQt5.QtGui import  QIcon,QCursor,QPalette, QBrush, QPixmap
+from PyQt5.QtCore import Qt,QPoint,QSize,pyqtSlot
+from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon,QDesktopWidget,QGridLayout,QWidget,QFrame
 from .fileutil import  get_file_realpath
 from .launch_item import launch_item
 from .dl_launch_item_detail import dl_launch_item_detail
@@ -22,6 +22,7 @@ class kdDesktopAssistant(QMainWindow):
         loadUi(get_file_realpath("kdDesktopAssistant.ui"), self)
         icon = QIcon(get_file_realpath('data/image/logo.png'))
         self.setWindowIcon(icon)
+        self.setWindowFlag(Qt.FramelessWindowHint)
         
 #         self.setStyleSheet("#MainWindow{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg").replace("\\","/") +");}")
         self.gl_apps.setAlignment(Qt.AlignTop)
@@ -40,6 +41,7 @@ class kdDesktopAssistant(QMainWindow):
         sys_tray_menu = QMenu()
         sys_tray_menu.menu_items   =[ QAction("退出",self,triggered=sys.exit)]
         sys_tray.setContextMenu(sys_tray_menu)
+        sys_tray.show()
 
         self.session_bt_size_policy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.session_btn_size = QSize(100, 25)
@@ -53,6 +55,20 @@ class kdDesktopAssistant(QMainWindow):
 #         初始化对话框对象
         self.dl_launch_item_detail = dl_launch_item_detail()
         self.session = session()
+        self.wg_catelog = QFrame()
+        self.gl_catelog = QGridLayout()
+        self.wg_catelog.setLayout(self.gl_catelog)
+#         self.gl_catelog.setWindowOpacity(0.5)
+#         self.wg_catelog.setAttribute(Qt.WA_TranslucentBackground,True )
+        self.wg_catelog.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
+        self.wg_catelog.setAutoFillBackground(True)
+        
+#         self.wg_catelog.setStyleSheet("background-image:url("+get_file_realpath("data/image/bg_catelog.gif") + ");background-size:cover;}")
+        p = QPalette()
+        p.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/bg_catelog.gif"))))
+        self.wg_catelog.setPalette(p)
+#         self.wg_catelog.setStyleSheet("QWidget#wg_catelog{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg") + ");background-size:cover;}")
+        
         
     def remove_item(self,item):
         item.setParent(None)
@@ -112,11 +128,34 @@ class kdDesktopAssistant(QMainWindow):
         li = launch_item(item)
         li.del_item_signal.connect(self.remove_item)
         li.edit_item_signal.connect(self.edit_lauchn_item)
+        li.click_catelog_signal.connect(self.on_catelog_clicked)
         self.gl_apps.addWidget(li, self.row, self.col, 1, 1)
         self.row += 1
         if self.row >= self.vetical_widget_number:
             self.row = 0
             self.col += 1
+    def on_catelog_clicked(self,catelog_id):
+#         清空layout上的组件
+        count = self.gl_catelog.count()
+        for i in reversed(range(count)) :
+            self.gl_catelog.itemAt(i).widget().setParent(None)
+            
+        item_list = app_data.get_launch_item_list_by_catelog(catelog_id)
+        if not item_list :
+            return
+        max_column =  math.floor(len(item_list) ** 0.5)
+        row, col = 1, 0
+        for i in item_list :
+            item_dict = app_data.tuple2dict_launch_item(i)
+            li = launch_item(item_dict)
+            li.del_item_signal.connect(self.remove_item)
+            li.edit_item_signal.connect(self.edit_lauchn_item)
+            li.click_catelog_signal.connect(self.on_catelog_clicked)
+            self.gl_apps.addWidget(li, self.row, self.col, 1, 1)
+            self.gl_catelog.addWidget(li)
+        self.wg_catelog.show()
+        self.wg_catelog.isActiveWindow()
+            
     def init_launch_items(self,item):
         self.cur_session = item
         self.row = 0
@@ -132,7 +171,7 @@ class kdDesktopAssistant(QMainWindow):
         session_id = item["id"]
         picture = item["picture"]
         if picture :
-            self.setStyleSheet("#MainWindow{border-image:url("+picture + ");}")
+            self.setStyleSheet("#MainWindow{background-image:url("+picture + ");background-size:cover;}")
         print(session_id)
         if not session_id :
             return
@@ -154,7 +193,7 @@ class kdDesktopAssistant(QMainWindow):
         pb_session.setMaximumSize(self.session_btn_size)
 #         设置桌面按钮为半透明
         op = QGraphicsOpacityEffect()  
-        op.setOpacity(0.7)    
+        op.setOpacity(0.9)    
         pb_session.setGraphicsEffect(op)  
         pb_session.setAutoFillBackground(True)
 #         TODO 待删除
@@ -205,10 +244,11 @@ class kdDesktopAssistant(QMainWindow):
                 
                 
     def toggle_window_status(self):
-        self.setVisible(not self.isVisible())
-        if self.isVisible() :
+        if self.isHidden() :
+            self.showMaximized()
             self.activateWindow()
-#             self.sys_tray.hide()
+        else :
+            self.hide()
     def sys_tray_handler(self,reason):
         if reason ==  2 or reason == 3 :
             self.toggle_window_status()
@@ -221,11 +261,14 @@ class kdDesktopAssistant(QMainWindow):
         self.hide()
         self.sys_tray.show()
         event.ignore()
+    def mouseReleaseEvent(self,event):
+        print("on mouseReleaseEvent")
+        self.wg_catelog.hide()
 def main():
     app = QApplication(sys.argv)
     win = kdDesktopAssistant()
 #     win.showFullScreen()
-#     win.showMaximized()
-    win.show()
+    win.showMaximized()
+#     win.show()
 #     app.exec_()
     sys.exit(app.exec_())

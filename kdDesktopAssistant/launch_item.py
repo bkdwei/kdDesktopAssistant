@@ -8,7 +8,7 @@ try:
 except Exception as e:
     pass
 import webbrowser,os,subprocess
-from PyQt5.QtWidgets import QWidget,QSizePolicy,QPushButton,QLabel,QVBoxLayout,QMenu,QAction,QMessageBox
+from PyQt5.QtWidgets import QWidget,QSizePolicy,QPushButton,QLabel,QVBoxLayout,QMenu,QAction,QMessageBox,QGraphicsDropShadowEffect,QGraphicsOpacityEffect
 from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal,QUrl
 from PyQt5.QtGui import QIcon,QCursor,QPalette,QPixmap
 try:
@@ -22,6 +22,7 @@ class launch_item(QWidget):
 #     删除组件信号
         del_item_signal = pyqtSignal(QWidget)
         edit_item_signal = pyqtSignal(dict,QWidget)
+        click_catelog_signal = pyqtSignal(int)
         def __init__(self,item):
             print(item)
             super().__init__()
@@ -41,18 +42,32 @@ class launch_item(QWidget):
                 self.set_icon(get_file_realpath('data/image/firefox64.png'))
             else :
                 self.set_icon(item["ico"])
-            self.pushButton.setIconSize(QSize(item_size/2,item_size/2))
+            self.pushButton.setIconSize(QSize(item_size/ 2,item_size/2))
             self.pushButton.clicked.connect(self.on_clicked)
+#             self.pushButton.setAttribute(Qt.WA_TranslucentBackground,True )
+#             self.pushButton.setAutoFillBackground(True)
+            self.pushButton.setStyleSheet("border: 0px;")
+            op = QGraphicsOpacityEffect()
+            op.setOpacity(0.5)
+#             self.pushButton.setGraphicsEffect(op)
             
             self.label = QLabel(self)
-            self.label.setText(item["name"])
-#             self.label.setWordWrap(True)
             self.label.setSizePolicy(sizePolicy)
-#             self.label.setMaximumSize(QSize(150, 50))
+            self.label.setAttribute(Qt.WA_TranslucentBackground )
             pe = QPalette()
-#             self.label.setAutoFillBackground(True)
+            self.label.setAutoFillBackground(True)
             pe.setColor(QPalette.WindowText,Qt.white)
             self.label.setPalette(pe)
+            
+            dse = QGraphicsDropShadowEffect(self.label)
+            dse.setBlurRadius(10);
+            dse.setColor(QPalette().color(QPalette.Shadow));
+            dse.setOffset(0,0);
+            self.label.setGraphicsEffect(dse);
+            
+            self.label.setAlignment(Qt.AlignCenter)
+            self.label.setWordWrap(True)
+            self.label.setText(item["name"])
             
             self.verticalLayout = QVBoxLayout(self)
             self.verticalLayout.addWidget(self.pushButton,0,Qt.AlignCenter)
@@ -86,6 +101,8 @@ class launch_item(QWidget):
                     os.startfile(url)
                 elif os.name == "posix":
                     subprocess.call(["xdg-open", url])
+            elif item_type == 3 :
+                self.click_catelog_signal.emit(self.item["id"])
         def handle_pop_menu(self):
             action = self.item_popup_menu.exec_(self.menu_item,QCursor.pos())
             if action:

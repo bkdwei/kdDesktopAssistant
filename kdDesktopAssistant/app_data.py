@@ -26,7 +26,7 @@ def insert_launch_item(item):
 def get_launch_item_list(session_id):
     conn = init_connection()
     cs = conn.cursor()
-    cs.execute("select * from launch_item where session_id = '{}'".format(session_id))
+    cs.execute("select * from launch_item where session_id = '{}' and catelog_id is null".format(session_id))
     return cs.fetchall()
 def delete_launch_item(item_name):
     conn = init_connection()
@@ -67,3 +67,8 @@ def update_session(item):
     print("update session:" ,item)
     cs.execute("update session set  name = ?, picture = ?, type = ?, color = ? where id = ? ",(item["name"],item["picture"],item["type"],item["color"], item["id"]))
     conn.commit()
+def get_launch_item_list_by_catelog(catelog_id):
+    conn = init_connection()
+    cs = conn.cursor()
+    cs.execute("select * from launch_item where catelog_id = '{}'".format(catelog_id))
+    return cs.fetchall()
