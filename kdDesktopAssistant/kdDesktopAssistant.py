@@ -240,6 +240,11 @@ class kdDesktopAssistant(QMainWindow):
                     QMessageBox.information(self, "启动小程序模式", "每个网页将作为一个应用程序打开")
                 else :
                     QMessageBox.information(self, "关闭小程序模式", "每个网页将作为一个标签也打开")
+            elif action_text == "退出" :
+                sys.exit()
+            
+            
+            
                     
                 
                 
