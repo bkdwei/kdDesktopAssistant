@@ -3,12 +3,12 @@ Created on 2019年3月30日
 
 @author: bkd
 '''
-import  sys,math
-from os.path import expanduser,isfile,isdir, basename
+import  sys,math,os
+from os.path import expanduser,isfile,isdir, basename, splitext,exists,join
 from PyQt5.uic import loadUi
-from PyQt5.QtGui import  QIcon,QCursor,QPalette, QBrush, QPixmap,QClipboard
-from PyQt5.QtCore import Qt,QPoint,QSize,pyqtSlot
-from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon,QDesktopWidget,QGridLayout,QWidget,QFrame
+from PyQt5.QtGui import  QIcon,QCursor,QPalette, QBrush, QPixmap
+from PyQt5.QtCore import Qt,QPoint,QSize,pyqtSlot,QFileInfo
+from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon,QDesktopWidget,QGridLayout,QWidget,QFrame,QFileIconProvider
 from .fileutil import  get_file_realpath
 from .launch_item import launch_item
 from .dl_launch_item_detail import dl_launch_item_detail
@@ -49,7 +49,7 @@ class kdDesktopAssistant(QMainWindow):
 #         初始化桌面
         print(QDesktopWidget().screenGeometry().height())
         print(self.gl_apps.geometry().height())
-        self.vetical_widget_number = math.floor((QDesktopWidget().screenGeometry().height() - 250) / get_option_int("item_size"))
+        self.vetical_widget_number = math.floor((QDesktopWidget().screenGeometry().height() - 150) / get_option_int("item_size"))
         self.home_session = get_option_value("home_session")
         self.init_session()
         
@@ -278,18 +278,37 @@ class kdDesktopAssistant(QMainWindow):
             if mimeData.hasText():
                 print("准备粘贴" + clipboard.text())
                 path = clipboard.text().replace("file:///","")
+                if os.name == "posix" :
+                    path = "/" + path
 #                 print("其他文件" ,mineData.urls()[0].path())
                 item = {}
-#                 if not isfile(path) and not isdir(path) :
-#                     return
-                if isfile(path):
-                    item["ico"] = get_file_realpath("data/image/file.png")
+                if  path.startswith("http") :
+                    item = self.dl_launch_item_detail.get_url_info(path)
+                    item["session_id"] = self.cur_session["id"]
+                    app_data.insert_launch_item(item)
+                    self.add_launch_item(item)
+                    return
+                elif isfile(path):
+                    provider = QFileIconProvider()
+                    fi = QFileInfo(path)
+                    icon = provider.icon(fi)
+#                     t = icon.pixmap().toImage().text()
+                    save_path = get_file_realpath(join("data/image/sysico",splitext(path)[1][1:]+".ico"))
+                    print("save_path:" + save_path)
+                    icon.pixmap(48).save(save_path)
+                    t = icon.name()
+                    t1 = icon.themeName()
+                    t2 = icon.themeSearchPaths()
+                    print("icon path:" + t+"," + t1,t2)
+                    if not icon.isNull() :
+                        item["ico"] = save_path
                 else :
                     item["ico"] = get_file_realpath("data/image/folder.svg")
                 item["name"] = basename(path)
                 item["url"] = path
                 item["type"] = 2
                 item["session_id"] = self.cur_session["id"]
+                print("add other launch item:" ,item)
                 app_data.insert_launch_item(item)
                 self.add_launch_item(item)
                 

@@ -93,38 +93,50 @@ class dl_launch_item_detail(QDialog):
         if qtype == QEvent.FocusOut :
             if not self.rb_url.isChecked():
                 return
-            url = self.le_url.text().strip()
-            if not "http" in url :
-                url = "http://" + url
-            parsed_url_dict = parse.urlsplit(url)
-            print("parsed_url_dict:" ,parsed_url_dict)
+            url = self.le_url.text()
+            item = self.get_url_info(url)
+            self.le_name.setText(item["name"])
+            self.le_url.setText(item["url"])
+            self.set_icon(item["ico"])
+            item["id"] = self.item["id"]
+            self.item = item
+        return False
+    def get_url_info(self,url):
+        item = {}
+        if not url.startswith("http") :
+            url = "http://" + url
+        parsed_url_dict = parse.urlsplit(url)
+        print("parsed_url_dict:" ,parsed_url_dict)
 
 #             获取标题
-            html = request.urlopen(url).read().decode('utf-8')
+        html = request.urlopen(url).read().decode('utf-8')
+        title=re.findall('<title>(.+)</title>',html)
+        if not title :
+#             有些https开头的网址有可能获取失败
+            html = request.urlopen(url.replace("https:","http:")).read().decode('utf-8')
             title=re.findall('<title>(.+)</title>',html)
-            if not title :
-                html = request.urlopen(url.replace("https:","http:")).read().decode('utf-8')
-                title=re.findall('<title>(.+)</title>',html)
-            self.le_name.setText(title[0])
+        item["name"] = title[0]
             
 #             获取网站logo
-            favicon_url = parsed_url_dict[0] + "://" +parsed_url_dict[1] + "/favicon.ico"
-            print("favicon_path：" + favicon_url)
-            favicon_path = get_file_realpath("data/image/netico/" + parsed_url_dict[1].replace(".","_") + ".ico")
-            print("favicon_path:" + favicon_path)
-            if not exists(favicon_path):
-                print("正在下载网站logo")
-                try:
-                    favicon = request.urlopen(favicon_url).read()
-                    with open(favicon_path,"wb") as fp:
-                        fp.write(favicon)
-                    self.set_icon(favicon_path)
-                    self.ico_path = favicon_path
-                except Exception as e:
-                    print("下载网站logo:" +str(e))
-            else :
-                self.set_icon(favicon_path)
-                self.ico_path = favicon_path
-                
-        return False
+        favicon_url = parsed_url_dict[0] + "://" +parsed_url_dict[1] + "/favicon.ico"
+        print("favicon_path：" + favicon_url)
+        favicon_path = get_file_realpath("data/image/netico/" + parsed_url_dict[1].replace(".","_") + ".ico")
+        print("favicon_path:" + favicon_path)
+        if not exists(favicon_path):
+            print("正在下载网站logo")
+            try:
+                favicon = request.urlopen(favicon_url).read()
+                with open(favicon_path,"wb") as fp:
+                    fp.write(favicon)
+#                 self.set_icon(favicon_path)
+#                 self.ico_path = favicon_path
+            except Exception as e:
+                print("下载网站logo:" +str(e))
+        else :
+            self.ico_path = favicon_path
+        item["ico"] = favicon_path
+        item["url"] = url
+        item["type"] = 1
+        print("return item:" ,item)
+        return item
         

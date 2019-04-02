@@ -8,9 +8,9 @@ try:
 except Exception as e:
     pass
 import webbrowser,os,subprocess
-from PyQt5.QtWidgets import QWidget,QSizePolicy,QPushButton,QLabel,QVBoxLayout,QMenu,QAction,QMessageBox,QGraphicsDropShadowEffect,QGraphicsOpacityEffect
-from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal,QUrl
-from PyQt5.QtGui import QIcon,QCursor,QPalette,QPixmap
+from PyQt5.QtWidgets import QWidget,QSizePolicy,QPushButton,QLabel,QVBoxLayout,QMenu,QAction,QMessageBox,QGraphicsDropShadowEffect,QGraphicsOpacityEffect,QFileIconProvider
+from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal,QUrl,QFileInfo
+from PyQt5.QtGui import QIcon,QCursor,QPalette,QPixmap,QFont
 try:
     from PyQt5.QtWebEngineWidgets import QWebEngineView
 except Exception as e:
@@ -27,11 +27,11 @@ class launch_item(QWidget):
             print(item)
             super().__init__()
             self.item  = item
-            sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
+#             sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+#             sizePolicy.setHorizontalStretch(0)
+#             sizePolicy.setVerticalStretch(0)
 #             sizePolicy.setHeightForWidth(self.session_bt_size_policy().hasHeightForWidth())
-            self.setSizePolicy(sizePolicy)
+#             self.setSizePolicy(sizePolicy)
             
 #             self.setMinimumSize(QSize(200, 100))
             item_size = get_option_int("item_size")
@@ -41,8 +41,9 @@ class launch_item(QWidget):
             if not item["ico"]:
                 self.set_icon(get_file_realpath('data/image/firefox64.png'))
             else :
+                self.check_icon_path(item)
                 self.set_icon(item["ico"])
-            self.pushButton.setIconSize(QSize(item_size/ 2,item_size/2))
+            self.pushButton.setIconSize(QSize(item_size * 0.4,item_size * 0.4))
             self.pushButton.clicked.connect(self.on_clicked)
 #             self.pushButton.setAttribute(Qt.WA_TranslucentBackground,True )
 #             self.pushButton.setAutoFillBackground(True)
@@ -52,7 +53,8 @@ class launch_item(QWidget):
 #             self.pushButton.setGraphicsEffect(op)
             
             self.label = QLabel(self)
-            self.label.setSizePolicy(sizePolicy)
+#             self.label.setSizePolicy(sizePolicy)
+            self.label.setFont(QFont("sans",10,QFont.Normal))
             self.label.setAttribute(Qt.WA_TranslucentBackground )
             pe = QPalette()
             self.label.setAutoFillBackground(True)
@@ -70,8 +72,8 @@ class launch_item(QWidget):
             self.label.setText(item["name"])
             
             self.verticalLayout = QVBoxLayout(self)
-            self.verticalLayout.addWidget(self.pushButton,0,Qt.AlignCenter)
-            self.verticalLayout.addWidget(self.label,0,Qt.AlignCenter)
+            self.verticalLayout.addWidget(self.pushButton,5,Qt.AlignCenter)
+            self.verticalLayout.addWidget(self.label,1,Qt.AlignCenter)
             
             self.item_popup_menu = QMenu()
             self.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -127,3 +129,16 @@ class launch_item(QWidget):
             icon = QIcon(icon_path)
             self.pushButton.setIcon(icon)
             
+        def check_icon_path(self,item):
+            if item["type"] in (2,4):
+                if not os.path.exists(item["ico"]) :
+                    save_path = get_file_realpath(os.path.join("data/image/sysico",os.path.splitext(item["url"])[1][1:]+".ico"))
+                    print("save_path:" + save_path)
+                    provider = QFileIconProvider()
+                    fi = QFileInfo(item["url"])
+                    icon = provider.icon(fi)
+                    icon.pixmap(48).save(save_path)
+                    item["ico"] = save_path
+            if item["type"] == 1 :
+                if not os.path.exists(item["ico"]):
+                    item["ico"] = get_file_realpath("data/image/firefox64.png")

@@ -1,6 +1,6 @@
 # coding: utf-8
 import os
-
+from shutil import copy2
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 def get_file_realpath(file):
     return os.path.join(cur_dir,file)
@@ -15,13 +15,8 @@ def check_and_create(absolute_file_path):
         os.remove(path)
         os.makedirs(path)
     # 检查文件
-    if os.path.exists(absolute_file_path) is not True:
-        with open(absolute_file_path, "w+",encoding="utf-8"):
-            pass
-    elif os.path.isfile(absolute_file_path) is not True:
-        os.removedirs(absolute_file_path)
-        with open(absolute_file_path, "w+",encoding="utf-8"):
-            pass
+    if not os.path.exists(absolute_file_path):
+        copy2(get_file_realpath("data/profile.ini"), absolute_file_path)
 
 def check_and_create_dir(absolute_dir_path):
     if os.path.exists(absolute_dir_path) is not True:
