@@ -288,7 +288,7 @@ class kdDesktopAssistant(QMainWindow):
                     item["ico"] = get_file_realpath("data/image/folder.svg")
                 item["name"] = basename(path)
                 item["url"] = path
-                item["type"] = 3
+                item["type"] = 2
                 item["session_id"] = self.cur_session["id"]
                 app_data.insert_launch_item(item)
                 self.add_launch_item(item)
