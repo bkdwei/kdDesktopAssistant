@@ -3,9 +3,10 @@ Created on 2019年3月30日
 
 @author: bkd
 '''
-import  sys,os,math
+import  sys,math
+from os.path import expanduser,isfile,isdir, basename
 from PyQt5.uic import loadUi
-from PyQt5.QtGui import  QIcon,QCursor,QPalette, QBrush, QPixmap
+from PyQt5.QtGui import  QIcon,QCursor,QPalette, QBrush, QPixmap,QClipboard
 from PyQt5.QtCore import Qt,QPoint,QSize,pyqtSlot
 from PyQt5.QtWidgets import QMainWindow, QApplication,QGraphicsOpacityEffect,QMessageBox,QFileDialog,QAction,QMenu,QSizePolicy,QPushButton,QSystemTrayIcon,QDesktopWidget,QGridLayout,QWidget,QFrame
 from .fileutil import  get_file_realpath
@@ -68,7 +69,6 @@ class kdDesktopAssistant(QMainWindow):
         p.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/bg_catelog.gif"))))
         self.wg_catelog.setPalette(p)
 #         self.wg_catelog.setStyleSheet("QWidget#wg_catelog{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg") + ");background-size:cover;}")
-        
         
     def remove_item(self,item):
         item.setParent(None)
@@ -157,7 +157,6 @@ class kdDesktopAssistant(QMainWindow):
         self.wg_catelog.isActiveWindow()
             
     def init_launch_items(self,item):
-        self.cur_session = item
         self.row = 0
         self.col = 0
         
@@ -186,6 +185,7 @@ class kdDesktopAssistant(QMainWindow):
             self.add_session(item_dict)
             if item_dict["name"] == self.home_session :
                 self.init_launch_items(item_dict)
+                self.cur_session = item_dict
     def add_session(self,item):
 #         新建桌面按钮
         pb_session = QPushButton(item["name"])
@@ -214,7 +214,7 @@ class kdDesktopAssistant(QMainWindow):
             elif action_text == "设置背景":
                 filename, _ = QFileDialog.getOpenFileName(self,
                             "选择背景文件",
-                            os.path.expanduser('~') , 
+                            expanduser('~') , 
                             "(*.jpg);;(*.png)")   #设置文件扩展名过滤,注意用双分号间隔
                 if filename:
                     print(filename)
@@ -269,6 +269,31 @@ class kdDesktopAssistant(QMainWindow):
     def mouseReleaseEvent(self,event):
         print("on mouseReleaseEvent")
         self.wg_catelog.hide()
+        
+    def keyReleaseEvent(self,event):
+        key = event.key()
+        if event.modifiers()== Qt.ControlModifier and key == Qt.Key_V :
+            clipboard = QApplication.clipboard()
+            mimeData = clipboard.mimeData()
+            if mimeData.hasText():
+                print("准备粘贴" + clipboard.text())
+                path = clipboard.text().replace("file:///","")
+#                 print("其他文件" ,mineData.urls()[0].path())
+                item = {}
+#                 if not isfile(path) and not isdir(path) :
+#                     return
+                if isfile(path):
+                    item["ico"] = get_file_realpath("data/image/file.png")
+                else :
+                    item["ico"] = get_file_realpath("data/image/folder.svg")
+                item["name"] = basename(path)
+                item["url"] = path
+                item["type"] = 3
+                item["session_id"] = self.cur_session["id"]
+                app_data.insert_launch_item(item)
+                self.add_launch_item(item)
+                
+            
 def main():
     app = QApplication(sys.argv)
     win = kdDesktopAssistant()
