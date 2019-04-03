@@ -67,9 +67,12 @@ class kdDesktopAssistant(QMainWindow):
         
 #         self.wg_catelog.setStyleSheet("background-image:url("+get_file_realpath("data/image/bg_catelog.gif") + ");background-size:cover;}")
         p = QPalette()
-        p.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/bg_catelog.gif"))))
+        p.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/bg_catelog.jpg"))))
         self.wg_catelog.setPalette(p)
-#         self.wg_catelog.setStyleSheet("QWidget#wg_catelog{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg") + ");background-size:cover;}")
+#         op = QGraphicsOpacityEffect()  
+#         op.setOpacity(0.9)    
+#         self.wg_catelog.setGraphicsEffect(op)  
+#         self.wg_catelog.setStyleSheet("QWidget#wg_catelog{background-color:#99cc99;}")
     def remove_item(self,item):
         item.setParent(None)
         self.gl_apps.removeWidget(item)
@@ -163,7 +166,7 @@ class kdDesktopAssistant(QMainWindow):
         else :
             self.wg_catelog.move(p.x() + 10,p.y()+10)
             
-        self.wg_catelog.exec_()
+        self.wg_catelog.show()
 #         self.wg_catelog.active()
             
     def init_launch_items(self,item):
@@ -304,33 +307,31 @@ class kdDesktopAssistant(QMainWindow):
             mimeData = clipboard.mimeData()
             if mimeData.hasText():
                 print("准备粘贴" + clipboard.text())
-                path = clipboard.text().replace("file:///","")
-                if os.name == "posix" :
-                    path = "/" + path
-#                 print("其他文件" ,mineData.urls()[0].path())
+                path = clipboard.text()
                 item = {}
-                if  path.startswith("http") :
+                if  not path.startswith("file") :
                     item = self.dl_launch_item_detail.get_url_info(path)
                     item["session_id"] = self.cur_session["id"]
                     app_data.insert_launch_item(item)
                     self.add_launch_item(item)
                     return
-                elif isfile(path):
-                    provider = QFileIconProvider()
-                    fi = QFileInfo(path)
-                    icon = provider.icon(fi)
+                
+                path = path.replace("file:///","")
+                if os.name == "posix" :
+                    path = "/" + path
+                provider = QFileIconProvider()
+                fi = QFileInfo(path)
+                icon = provider.icon(fi)
 #                     t = icon.pixmap().toImage().text()
-                    save_path = get_file_realpath(join("data/image/sysico",splitext(path)[1][1:]+".ico"))
-                    print("save_path:" + save_path)
-                    icon.pixmap(48).save(save_path)
-                    t = icon.name()
-                    t1 = icon.themeName()
-                    t2 = icon.themeSearchPaths()
-                    print("icon path:" + t+"," + t1,t2)
-                    if not icon.isNull() :
-                        item["ico"] = save_path
-                else :
-                    item["ico"] = get_file_realpath("data/image/folder.svg")
+                save_path = get_file_realpath(join("data/image/sysico",splitext(path)[1][1:]+".ico"))
+                print("save_path:" + save_path)
+                icon.pixmap(48).save(save_path)
+                t = icon.name()
+                t1 = icon.themeName()
+                t2 = icon.themeSearchPaths()
+                print("icon path:" + t+"," + t1,t2)
+                if not icon.isNull() :
+                    item["ico"] = save_path
                 item["name"] = basename(path)
                 item["url"] = path
                 item["type"] = 2
