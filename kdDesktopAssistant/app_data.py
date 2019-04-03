@@ -4,19 +4,16 @@ Created on 2019年3月31日
 @author: bkd
 '''
 import sqlite3
-from .fileutil import get_file_realpath
+from .kdconfig import db_file
 
 cs = None
-db_path = "data/db/kdDesktopAssistant.db"
 def init_db():
-    db_real_path = get_file_realpath(db_path)
-    conn = sqlite3.connect(db_real_path)
+    conn = sqlite3.connect(db_file)
     cs = conn.cursor()
     cs.execute("create table launch_item (id integer primary key NOT NULL,ico varchar(200),name varchar(50) UNIQUE NOT NULL,address varchar(250),type integer NOT NULL)")
     print("创建launch_item表成功")
 def init_connection():
-    db_real_path = get_file_realpath(db_path)
-    conn = sqlite3.connect(db_real_path)
+    conn = sqlite3.connect(db_file)
     return conn
 def insert_launch_item(item):
     conn = init_connection()
@@ -40,7 +37,7 @@ def update_launch_item(item):
     conn = init_connection()
     cs = conn.cursor()
     print("update item:" ,item)
-    cs.execute("update launch_item set ico = ?, name = ?, url = ?, type = ?, session_id = ? where id = ? ",(item["ico"],item["name"],item["url"],item["type"],item["session_id"], item["id"]))
+    cs.execute("update launch_item set ico = ?, name = ?, url = ?, type = ?, session_id = ?, catelog_id = ? where id = ? ",(item["ico"],item["name"],item["url"],item["type"],item["session_id"], item["catelog_id"], item["id"]))
     conn.commit()
 
 def insert_session_item(item):
@@ -72,3 +69,9 @@ def get_launch_item_list_by_catelog(catelog_id):
     cs = conn.cursor()
     cs.execute("select * from launch_item where catelog_id = '{}'".format(catelog_id))
     return cs.fetchall()
+def delete_session(session_id):
+    conn = init_connection()
+    cs = conn.cursor()
+    cs.execute("delete from session where id = '{}' ".format(session_id))
+    cs.execute("delete from launch_item where session_id = '{}' ".format(session_id))
+    conn.commit()

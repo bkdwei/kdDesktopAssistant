@@ -30,7 +30,8 @@ class kdDesktopAssistant(QMainWindow):
         
 #         右键菜单设置
         self.pop_menu = QMenu()
-        self.pop_menu_item = [QAction("新增启动项"),QAction("新增桌面"),QAction("设置背景图片"),QAction("修改桌面"),QAction("删除桌面"),QAction("设置为主桌面"),QAction("小程序模式"),QAction("导出配置"),QAction("导入配置"),QAction("退出")]
+#         TODO 待实现的右键功能：QAction("导出配置"),QAction("导入配置")
+        self.pop_menu_item = [QAction("新增启动项"),QAction("新增桌面"),QAction("设置背景图片"),QAction("修改桌面"),QAction("删除桌面"),QAction("设置为主桌面"),QAction("小程序模式"),QAction("退出")]
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested[QPoint].connect(self.handle_pop_menu)
         
@@ -69,7 +70,6 @@ class kdDesktopAssistant(QMainWindow):
         p.setBrush(QPalette.Background, QBrush(QPixmap(get_file_realpath("data/image/bg_catelog.gif"))))
         self.wg_catelog.setPalette(p)
 #         self.wg_catelog.setStyleSheet("QWidget#wg_catelog{border-image:url("+get_file_realpath("data/image/S60922-232113.jpg") + ");background-size:cover;}")
-        
     def remove_item(self,item):
         item.setParent(None)
         self.gl_apps.removeWidget(item)
@@ -136,6 +136,9 @@ class kdDesktopAssistant(QMainWindow):
             self.col += 1
     def on_catelog_clicked(self,catelog_id):
 #         清空layout上的组件
+        if not self.wg_catelog.isHidden():
+            self.wg_catelog.hide()
+            return
         count = self.gl_catelog.count()
         for i in reversed(range(count)) :
             self.gl_catelog.itemAt(i).widget().setParent(None)
@@ -153,8 +156,15 @@ class kdDesktopAssistant(QMainWindow):
             li.click_catelog_signal.connect(self.on_catelog_clicked)
             self.gl_apps.addWidget(li, self.row, self.col, 1, 1)
             self.gl_catelog.addWidget(li)
-        self.wg_catelog.show()
-        self.wg_catelog.isActiveWindow()
+            
+        p = QCursor.pos()
+        if p.y() > self.gl_apps.geometry().height() /2 :
+            self.wg_catelog.move(p.x() + 10,p.y() - self.wg_catelog.geometry().height())
+        else :
+            self.wg_catelog.move(p.x() + 10,p.y()+10)
+            
+        self.wg_catelog.exec_()
+#         self.wg_catelog.active()
             
     def init_launch_items(self,item):
         self.row = 0
@@ -179,13 +189,27 @@ class kdDesktopAssistant(QMainWindow):
             item_dict = app_data.tuple2dict_launch_item(item)
             self.add_launch_item(item_dict)
     def init_session(self):
+#         清空旧的桌面按钮
+        count = self.hl_session.count()
+        for i in reversed(range(count)) :
+            self.hl_session.itemAt(i).widget().setParent(None)
         self.session_list = app_data.get_session_list()
+        initedSession = False
         for item in self.session_list:
             item_dict = app_data.tuple2dict_session(item)
             self.add_session(item_dict)
             if item_dict["name"] == self.home_session :
+                initedSession = True
                 self.init_launch_items(item_dict)
                 self.cur_session = item_dict
+            
+#       默认桌面未初始化，默认初始化第一个桌面
+        if not initedSession :
+            item = self.session_list[0]
+            item_dict = app_data.tuple2dict_session(item)
+            self.init_launch_items(item_dict)
+            self.cur_session = item_dict
+                
     def add_session(self,item):
 #         新建桌面按钮
         pb_session = QPushButton(item["name"])
@@ -203,7 +227,13 @@ class kdDesktopAssistant(QMainWindow):
         pb_session.clicked.connect(self.on_pb_session_clicked)
         self.hl_session.addWidget(pb_session)
     def on_pb_session_clicked(self):
-        self.cur_session = self.sender().item
+        sender = self.sender()
+        self.cur_session = sender.item
+        count = self.hl_session.count()
+        for i in reversed(range(count)) :
+            self.hl_session.itemAt(i).widget().setStyleSheet("QPushButton{background-color:#FFFFFF}")
+        sender.setStyleSheet("QPushButton{background-color:#FF9900}")
+        
         self.init_launch_items(self.cur_session)
     def handle_pop_menu(self):
         action = self.pop_menu.exec_(self.pop_menu_item,QCursor.pos())
@@ -211,14 +241,6 @@ class kdDesktopAssistant(QMainWindow):
             action_text = action.text()
             if action_text == "新增启动项" :
                 self.edit_lauchn_item(None,None)
-            elif action_text == "设置背景":
-                filename, _ = QFileDialog.getOpenFileName(self,
-                            "选择背景文件",
-                            expanduser('~') , 
-                            "(*.jpg);;(*.png)")   #设置文件扩展名过滤,注意用双分号间隔
-                if filename:
-                    print(filename)
-                    self.set_background_image(filename)
             elif action_text == "新增桌面" :
                 if self.session.exec_() :
                     session_item = {}
@@ -227,8 +249,9 @@ class kdDesktopAssistant(QMainWindow):
                     session_item["type"] = 0
                     session_item["color"] = None
                     app_data.insert_session_item(session_item)
+                    self.add_session(session_item)
                     QMessageBox.information(self, "新增桌面", "新增桌面成功")
-            elif action_text == "设置背景图片" :
+            elif action_text in ( "设置背景图片","修改桌面") :
                 self.edit_session(self.cur_session)
             elif action_text == "设置为主桌面" :
                 set_home_session(self.cur_session["name"])
@@ -240,9 +263,13 @@ class kdDesktopAssistant(QMainWindow):
                     QMessageBox.information(self, "启动小程序模式", "每个网页将作为一个应用程序打开")
                 else :
                     QMessageBox.information(self, "关闭小程序模式", "每个网页将作为一个标签也打开")
+                    QMessageBox.information(self, "关闭小程序模式", "每个网页将作为一个标签也打开")
             elif action_text == "退出" :
                 sys.exit()
-            
+            elif action_text == "删除桌面" :
+                app_data.delete_session(self.cur_session["id"])
+                self.init_session()
+                QMessageBox.information(self, "删除桌面", "删除桌面成功")
             
             
                     
@@ -307,6 +334,9 @@ class kdDesktopAssistant(QMainWindow):
                 item["name"] = basename(path)
                 item["url"] = path
                 item["type"] = 2
+                if not self.cur_session["id"]:
+                    QMessageBox.information(self, "新桌面", "新桌面需重启后才能添加启动项")
+                    return
                 item["session_id"] = self.cur_session["id"]
                 print("add other launch item:" ,item)
                 app_data.insert_launch_item(item)

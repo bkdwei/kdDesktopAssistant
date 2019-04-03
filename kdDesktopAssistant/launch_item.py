@@ -9,8 +9,8 @@ except Exception as e:
     pass
 import webbrowser,os,subprocess
 from PyQt5.QtWidgets import QWidget,QSizePolicy,QPushButton,QLabel,QVBoxLayout,QMenu,QAction,QMessageBox,QGraphicsDropShadowEffect,QGraphicsOpacityEffect,QFileIconProvider
-from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal,QUrl,QFileInfo
-from PyQt5.QtGui import QIcon,QCursor,QPalette,QPixmap,QFont
+from PyQt5.QtCore import QSize,Qt,QPoint,pyqtSignal,QUrl,QFileInfo,QMimeData
+from PyQt5.QtGui import QIcon,QCursor,QPalette,QPixmap,QFont,QDrag
 try:
     from PyQt5.QtWebEngineWidgets import QWebEngineView
 except Exception as e:
@@ -38,6 +38,10 @@ class launch_item(QWidget):
             self.setMaximumSize(QSize(item_size, item_size))
             
             self.pushButton = QPushButton(self)
+#             允许拖放
+            self.setAcceptDrops(True)
+            self.pushButton.setAcceptDrops(True)
+#             self.pushButton.setDragEnabled(True)
             if not item["ico"]:
                 self.set_icon(get_file_realpath('data/image/firefox64.png'))
             else :
@@ -142,3 +146,43 @@ class launch_item(QWidget):
             if item["type"] == 1 :
                 if not os.path.exists(item["ico"]):
                     item["ico"] = get_file_realpath("data/image/firefox64.png")
+        def mousePresseEvent(self, event):
+            if event.buttons() != Qt.LeftButton :
+                return
+            print("on mousePresseEvent")
+            drag = QDrag()
+            mimedata = QMimeData()
+            mimedata.setText('aaa')#放入数据
+            drag.setMimeData(mimedata)
+            drag.exec_() #exec()函数并不会阻塞主函数
+        def mouseMoveEvent(self, e):
+            if e.buttons() != Qt.LeftButton:
+                return
+            print("哦牛")
+#             position = e.pos()
+#             self.move(position)
+            mimeData = QMimeData()
+    
+            drag = QDrag(self)
+            mimeData.setImageData(self)
+            drag.setMimeData(mimeData)
+            drag.setHotSpot(e.pos() - self.rect().topLeft())
+    
+            dropAcion = drag.exec_(Qt.MoveAction)
+        def dragEnterEvent(self, event):
+            event.acceptProposedAction()
+            print("on dragEnterEvent")
+
+        def dropEvent(self, event):
+            launch_item = event.mimeData().imageData()
+            item_data = launch_item.item
+            print(item_data)
+            if item_data["type"] != 3:
+                item_data["catelog_id"] = self.item["id"]
+                app_data.update_launch_item(item_data)
+                launch_item.hide()
+            
+            print("on dropEvent")
+            event.setDropAction(Qt.MoveAction)
+            event.accept()
+            #To Do
