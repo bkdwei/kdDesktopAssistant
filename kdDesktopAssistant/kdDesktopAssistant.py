@@ -345,7 +345,7 @@ class kdDesktopAssistant(QMainWindow):
                 fi = QFileInfo(path)
                 icon = provider.icon(fi)
 #                     t = icon.pixmap().toImage().text()
-                save_path = join(config_dir ,"data/image/sysico",splitext(path)[1][1:]+".ico")
+                save_path = join(config_dir ,"data/image/sysico",splitext(path)[0]+".ico")
                 print("save_path:" + save_path)
                 icon.pixmap(48).save(save_path)
                 t = icon.name()
