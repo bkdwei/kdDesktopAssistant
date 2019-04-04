@@ -20,6 +20,8 @@ def insert_launch_item(item):
     cs = conn.cursor()
     cs.execute("insert into launch_item (ico,name,url,type,session_id) values(?,?,?,?,?)",(item["ico"],item["name"],item["url"],item["type"], item["session_id"]))
     conn.commit()
+    cs.execute("select last_insert_rowid() from launch_item")
+    return cs.fetchone()[0]
 def get_launch_item_list(session_id):
     conn = init_connection()
     cs = conn.cursor()
@@ -45,6 +47,8 @@ def insert_session_item(item):
     cs = conn.cursor()
     cs.execute("insert into session (name,type,picture,color) values(?,?,?,?)",(item["name"],item["type"],item["picture"],item["color"]))
     conn.commit()
+    cs.execute("select last_insert_rowid() from session")
+    return cs.fetchone()[0]
 def update_session_item(item):
     conn = init_connection()
     cs = conn.cursor()

@@ -207,7 +207,7 @@ class kdDesktopAssistant(QMainWindow):
                 self.cur_session = item_dict
             
 #       默认桌面未初始化，默认初始化第一个桌面
-        if not initedSession :
+        if not initedSession and len(self.session_list) > 0:
             item = self.session_list[0]
             item_dict = app_data.tuple2dict_session(item)
             self.init_launch_items(item_dict)
@@ -229,6 +229,7 @@ class kdDesktopAssistant(QMainWindow):
         pb_session.item = item
         pb_session.clicked.connect(self.on_pb_session_clicked)
         self.hl_session.addWidget(pb_session)
+        return pb_session
     def on_pb_session_clicked(self):
         sender = self.sender()
         self.cur_session = sender.item
@@ -251,8 +252,16 @@ class kdDesktopAssistant(QMainWindow):
                     session_item["picture"] = self.session.le_picture.text()
                     session_item["type"] = 0
                     session_item["color"] = None
-                    app_data.insert_session_item(session_item)
-                    self.add_session(session_item)
+                    session_item["id"] = app_data.insert_session_item(session_item)
+                    print(session_item)
+                    pb_session = self.add_session(session_item)
+                    self.init_launch_items(session_item)
+                    self.cur_session = session_item
+#                     高亮当前桌面
+                    count = self.hl_session.count()
+                    for i in reversed(range(count)) :
+                        self.hl_session.itemAt(i).widget().setStyleSheet("QPushButton{background-color:#FFFFFF}")
+                    pb_session.setStyleSheet("QPushButton{background-color:#FF9900}")
                     QMessageBox.information(self, "新增桌面", "新增桌面成功")
             elif action_text in ( "设置背景图片","修改桌面") :
                 self.edit_session(self.cur_session)
@@ -312,7 +321,7 @@ class kdDesktopAssistant(QMainWindow):
                 if  not path.startswith("file") :
                     item = self.dl_launch_item_detail.get_url_info(path)
                     item["session_id"] = self.cur_session["id"]
-                    app_data.insert_launch_item(item)
+                    item["id"] = app_data.insert_launch_item(item)
                     self.add_launch_item(item)
                     return
                 
@@ -340,7 +349,8 @@ class kdDesktopAssistant(QMainWindow):
                     return
                 item["session_id"] = self.cur_session["id"]
                 print("add other launch item:" ,item)
-                app_data.insert_launch_item(item)
+                itemm["id"] = app_data.insert_launch_item(item)
+                print(item)
                 self.add_launch_item(item)
                 
             
