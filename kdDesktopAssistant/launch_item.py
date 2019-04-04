@@ -180,7 +180,7 @@ class launch_item(QWidget):
             if item_data["type"] != 3:
                 item_data["catelog_id"] = self.item["id"]
                 app_data.update_launch_item(item_data)
-                launch_item.hide()
+                launch_item.setParent(None)
             
             print("on dropEvent")
             event.setDropAction(Qt.MoveAction)
