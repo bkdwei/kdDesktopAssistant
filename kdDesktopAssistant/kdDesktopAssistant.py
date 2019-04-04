@@ -132,11 +132,14 @@ class kdDesktopAssistant(QMainWindow):
         li.del_item_signal.connect(self.remove_item)
         li.edit_item_signal.connect(self.edit_lauchn_item)
         li.click_catelog_signal.connect(self.on_catelog_clicked)
+        li.repaint_session_signal.connect(self.repaint_session)
         self.gl_apps.addWidget(li, self.row, self.col, 1, 1)
         self.row += 1
         if self.row >= self.vetical_widget_number:
             self.row = 0
             self.col += 1
+    def repaint_session(self):
+        self.init_launch_items(self.cur_session)
     def on_catelog_clicked(self,catelog_id):
 #         清空layout上的组件
         if not self.wg_catelog.isHidden():
@@ -169,7 +172,13 @@ class kdDesktopAssistant(QMainWindow):
         self.wg_catelog.show()
 #         self.wg_catelog.active()
             
-    def init_launch_items(self,item,pb_session):
+    def init_launch_items(self,item):
+#         高亮当前桌面的按钮
+        count = self.hl_session.count()
+        for i in reversed(range(count)) :
+            self.hl_session.itemAt(i).widget().setStyleSheet("QPushButton{background-color:#FFFFFF}")
+        self.cur_pb_session.setStyleSheet("QPushButton{background-color:#FF9900}")
+        
         self.row = 0
         self.col = 0
         
@@ -179,14 +188,16 @@ class kdDesktopAssistant(QMainWindow):
 #         一个老外给的方法，很棒。https://stackoverflow.com/questions/4528347/clear-all-widgets-in-a-layout-in-pyqt
         for i in reversed(range(count)) :
             self.gl_apps.itemAt(i).widget().setParent(None)
-            
+        
+#         设置背景图片    
         session_id = item["id"]
         picture = item["picture"]
         if picture :
             self.setStyleSheet("#MainWindow{background-image:url("+picture + ");background-size:cover;}")
-        print(session_id)
+
         if not session_id :
             return
+#         初始化启动项
         self.item_list = app_data.get_launch_item_list(session_id)
         for item in self.item_list:
             item_dict = app_data.tuple2dict_launch_item(item)
@@ -207,14 +218,16 @@ class kdDesktopAssistant(QMainWindow):
                 first_pb_session = pb_session
             if item_dict["name"] == self.home_session :
                 initedSession = True
-                self.init_launch_items(item_dict,pb_session)
+                self.cur_pb_session = pb_session
+                self.init_launch_items(item_dict)
                 self.cur_session = item_dict
             
 #       默认桌面未初始化，默认初始化第一个桌面
         if not initedSession and len(self.session_list) > 0:
             item = self.session_list[0]
             item_dict = app_data.tuple2dict_session(item)
-            self.init_launch_items(item_dict,first_pb_session)
+            self.cur_pb_session = first_pb_session
+            self.init_launch_items(item_dict)
             self.cur_session = item_dict
                 
     def add_session(self,item):
@@ -237,12 +250,10 @@ class kdDesktopAssistant(QMainWindow):
     def on_pb_session_clicked(self):
         sender = self.sender()
         self.cur_session = sender.item
-        count = self.hl_session.count()
-        for i in reversed(range(count)) :
-            self.hl_session.itemAt(i).widget().setStyleSheet("QPushButton{background-color:#FFFFFF}")
-        sender.setStyleSheet("QPushButton{background-color:#FF9900}")
+
         
-        self.init_launch_items(self.cur_session,sender)
+        self.cur_pb_session = sender
+        self.init_launch_items(self.cur_session)
     def handle_pop_menu(self):
         action = self.pop_menu.exec_(self.pop_menu_item,QCursor.pos())
         if action:
