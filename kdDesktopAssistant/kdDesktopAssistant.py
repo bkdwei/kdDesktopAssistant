@@ -169,7 +169,7 @@ class kdDesktopAssistant(QMainWindow):
         self.wg_catelog.show()
 #         self.wg_catelog.active()
             
-    def init_launch_items(self,item):
+    def init_launch_items(self,item,pb_session):
         self.row = 0
         self.col = 0
         
@@ -191,6 +191,7 @@ class kdDesktopAssistant(QMainWindow):
         for item in self.item_list:
             item_dict = app_data.tuple2dict_launch_item(item)
             self.add_launch_item(item_dict)
+        
     def init_session(self):
 #         清空旧的桌面按钮
         count = self.hl_session.count()
@@ -198,19 +199,22 @@ class kdDesktopAssistant(QMainWindow):
             self.hl_session.itemAt(i).widget().setParent(None)
         self.session_list = app_data.get_session_list()
         initedSession = False
+        first_pb_session = None
         for item in self.session_list:
             item_dict = app_data.tuple2dict_session(item)
-            self.add_session(item_dict)
+            pb_session = self.add_session(item_dict)
+            if not first_pb_session:
+                first_pb_session = pb_session
             if item_dict["name"] == self.home_session :
                 initedSession = True
-                self.init_launch_items(item_dict)
+                self.init_launch_items(item_dict,pb_session)
                 self.cur_session = item_dict
             
 #       默认桌面未初始化，默认初始化第一个桌面
         if not initedSession and len(self.session_list) > 0:
             item = self.session_list[0]
             item_dict = app_data.tuple2dict_session(item)
-            self.init_launch_items(item_dict)
+            self.init_launch_items(item_dict,first_pb_session)
             self.cur_session = item_dict
                 
     def add_session(self,item):
@@ -238,7 +242,7 @@ class kdDesktopAssistant(QMainWindow):
             self.hl_session.itemAt(i).widget().setStyleSheet("QPushButton{background-color:#FFFFFF}")
         sender.setStyleSheet("QPushButton{background-color:#FF9900}")
         
-        self.init_launch_items(self.cur_session)
+        self.init_launch_items(self.cur_session,sender)
     def handle_pop_menu(self):
         action = self.pop_menu.exec_(self.pop_menu_item,QCursor.pos())
         if action:
@@ -257,11 +261,6 @@ class kdDesktopAssistant(QMainWindow):
                     pb_session = self.add_session(session_item)
                     self.init_launch_items(session_item)
                     self.cur_session = session_item
-#                     高亮当前桌面
-                    count = self.hl_session.count()
-                    for i in reversed(range(count)) :
-                        self.hl_session.itemAt(i).widget().setStyleSheet("QPushButton{background-color:#FFFFFF}")
-                    pb_session.setStyleSheet("QPushButton{background-color:#FF9900}")
                     QMessageBox.information(self, "新增桌面", "新增桌面成功")
             elif action_text in ( "设置背景图片","修改桌面") :
                 self.edit_session(self.cur_session)
@@ -279,9 +278,11 @@ class kdDesktopAssistant(QMainWindow):
             elif action_text == "退出" :
                 sys.exit()
             elif action_text == "删除桌面" :
-                app_data.delete_session(self.cur_session["id"])
-                self.init_session()
-                QMessageBox.information(self, "删除桌面", "删除桌面成功")
+                reply = QMessageBox.warning(self, "确认删除桌面？", "该桌面的所有启动项都会被删除，并不可还原，确认删除?",QMessageBox.Yes | QMessageBox.No)
+                if reply == QMessageBox.Yes :
+                    app_data.delete_session(self.cur_session["id"])
+                    self.init_session()
+                    QMessageBox.information(self, "删除桌面", "删除桌面成功",QMessageBox.Ok)
             
             
                     
@@ -349,7 +350,7 @@ class kdDesktopAssistant(QMainWindow):
                     return
                 item["session_id"] = self.cur_session["id"]
                 print("add other launch item:" ,item)
-                itemm["id"] = app_data.insert_launch_item(item)
+                item["id"] = app_data.insert_launch_item(item)
                 print(item)
                 self.add_launch_item(item)
                 
