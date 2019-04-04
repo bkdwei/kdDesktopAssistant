@@ -136,7 +136,7 @@ class launch_item(QWidget):
                     app_data.delete_launch_item(self.item["id"])
                     self.del_item_signal.emit(self)
                     self.repaint_session_signal.emit()
-                    QMessageBox.information(self, "删除启动项",   "删除启动项成功", QMessageBox.Yes)
+#                     QMessageBox.information(self, "删除启动项",   "删除启动项成功", QMessageBox.Yes)
                 elif text == "修改" :
                     self.edit_item_signal.emit(self.item,self)
         def update_item(self,item):
