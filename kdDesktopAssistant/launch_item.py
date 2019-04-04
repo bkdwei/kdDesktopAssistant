@@ -23,6 +23,7 @@ class launch_item(QWidget):
         del_item_signal = pyqtSignal(QWidget)
         edit_item_signal = pyqtSignal(dict,QWidget)
         click_catelog_signal = pyqtSignal(int)
+        repaint_session_signal = pyqtSignal()
         def __init__(self,item):
             print(item)
             super().__init__()
@@ -115,8 +116,9 @@ class launch_item(QWidget):
                 text = action.text()
                 if text == "删除":
                     print(text)
-                    app_data.delete_launch_item(self.item["name"])
+                    app_data.delete_launch_item(self.item["id"])
                     self.del_item_signal.emit(self)
+                    self.repaint_session_signal.emit()
                     QMessageBox.information(self, "删除启动项",   "删除启动项成功", QMessageBox.Yes)
                 elif text == "修改" :
                     self.edit_item_signal.emit(self.item,self)

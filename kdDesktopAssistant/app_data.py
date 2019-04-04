@@ -27,10 +27,10 @@ def get_launch_item_list(session_id):
     cs = conn.cursor()
     cs.execute("select * from launch_item where session_id = '{}' and catelog_id is null".format(session_id))
     return cs.fetchall()
-def delete_launch_item(item_name):
+def delete_launch_item(item_id):
     conn = init_connection()
     cs = conn.cursor()
-    cs.execute("delete from launch_item where name = '{}' ".format(item_name))
+    cs.execute("delete from launch_item where id = '{}' ".format(item_id))
     conn.commit()
 def tuple2dict_launch_item(t):
     return {"id":t[0],"ico":t[1],"name":t[2],"url":t[3],"type":t[4],"session_id":t[5]}
