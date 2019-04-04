@@ -14,6 +14,7 @@ from PyQt5.QtGui import QIcon,QCursor,QPalette,QPixmap,QFont,QDrag
 try:
     from PyQt5.QtWebEngineWidgets import QWebEngineView
 except Exception as e:
+    print(str(e))
     pass
 from .fileutil import get_file_realpath 
 from . import app_data
@@ -92,15 +93,19 @@ class launch_item(QWidget):
                     url = "http://" + url
 
                 if get_option_boolean("web_as_application") :
-                    self.webapp = QWebEngineView()
-                    self.webapp.load(QUrl(url))
-                    if self.item["ico"]:
-                        try :
-                            print("ico path:" + self.item["ico"])
-                            self.webapp.setWindowIcon(QIcon(self.item["ico"]))
-                        except Exception as e:
-                            print("打开图标异常" +str(e))
-                    self.webapp.show()
+                    try:
+                        self.webapp = QWebEngineView()
+                        self.webapp.load(QUrl(url))
+                        if self.item["ico"]:
+                            try :
+                                print("ico path:" + self.item["ico"])
+                                self.webapp.setWindowIcon(QIcon(self.item["ico"]))
+                            except Exception as e:
+                                print("打开图标异常" +str(e))
+                        self.webapp.show()
+                    except Exception as e:
+                        print(str(e))
+                        webbrowser.open_new_tab(url)
                 else :
                     webbrowser.open_new_tab(url)
             elif item_type in( 2,4) :
