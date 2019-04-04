@@ -5,13 +5,14 @@ Created on 2019年3月3日
 @author: bkd
 '''
 import re
-from os.path import exists,expanduser,basename
+from os.path import exists,expanduser,basename,join
 from urllib import parse,request
 from PyQt5.uic import loadUi
 from PyQt5.QtWidgets import QDialog,QFileDialog, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QEvent, pyqtSlot
 from .fileutil import get_file_realpath
+from .kdconfig import config_dir
 
 
 class dl_launch_item_detail(QDialog):
@@ -120,7 +121,7 @@ class dl_launch_item_detail(QDialog):
 #             获取网站logo
         favicon_url = parsed_url_dict[0] + "://" +parsed_url_dict[1] + "/favicon.ico"
         print("favicon_path：" + favicon_url)
-        favicon_path = get_file_realpath("data/image/netico/" + parsed_url_dict[1].replace(".","_") + ".ico")
+        favicon_path = join(config_dir ,"data/image/netico/" , parsed_url_dict[1].replace(".","_") + ".ico")
         print("favicon_path:" + favicon_path)
         if not exists(favicon_path):
             print("正在下载网站logo")

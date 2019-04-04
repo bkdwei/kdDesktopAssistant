@@ -14,7 +14,7 @@ from .launch_item import launch_item
 from .dl_launch_item_detail import dl_launch_item_detail
 from .session import session
 from . import app_data
-from  .kdconfig import set_home_session,set_web_mode,get_option_value,get_option_int
+from  .kdconfig import set_home_session,set_web_mode,get_option_value,get_option_int,config_dir
 from .kdconfig import get_option_boolean
 class kdDesktopAssistant(QMainWindow):
 
@@ -58,6 +58,7 @@ class kdDesktopAssistant(QMainWindow):
         self.dl_launch_item_detail = dl_launch_item_detail()
         self.session = session()
         self.wg_catelog = QFrame()
+        self.wg_catelog.setWindowFlags(Qt.Popup)
         self.gl_catelog = QGridLayout()
         self.wg_catelog.setLayout(self.gl_catelog)
 #         self.gl_catelog.setWindowOpacity(0.5)
@@ -163,11 +164,11 @@ class kdDesktopAssistant(QMainWindow):
             self.gl_apps.addWidget(li, self.row, self.col, 1, 1)
             self.gl_catelog.addWidget(li)
             
-        p = QCursor.pos()
-        if p.y() > self.gl_apps.geometry().height() /2 :
-            self.wg_catelog.move(p.x() + 10,p.y() - self.wg_catelog.geometry().height())
-        else :
-            self.wg_catelog.move(p.x() + 10,p.y()+10)
+#         p = QCursor.pos()
+#         if p.y() > self.gl_apps.geometry().height() /2 :
+#             self.wg_catelog.move(p.x() + 10,p.y() - self.wg_catelog.geometry().height())
+#         else :
+#             self.wg_catelog.move(p.x() + 10,p.y()+10)
             
         self.wg_catelog.show()
 #         self.wg_catelog.active()
@@ -327,7 +328,7 @@ class kdDesktopAssistant(QMainWindow):
             clipboard = QApplication.clipboard()
             mimeData = clipboard.mimeData()
             if mimeData.hasText():
-                print("准备粘贴" + clipboard.text())
+                print("准备粘贴:" + clipboard.text())
                 path = clipboard.text()
                 item = {}
                 if  not path.startswith("file") :
@@ -344,7 +345,7 @@ class kdDesktopAssistant(QMainWindow):
                 fi = QFileInfo(path)
                 icon = provider.icon(fi)
 #                     t = icon.pixmap().toImage().text()
-                save_path = get_file_realpath(join("data/image/sysico",splitext(path)[1][1:]+".ico"))
+                save_path = join(config_dir ,"data/image/sysico",splitext(path)[1][1:]+".ico")
                 print("save_path:" + save_path)
                 icon.pixmap(48).save(save_path)
                 t = icon.name()

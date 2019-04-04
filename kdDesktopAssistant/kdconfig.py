@@ -20,7 +20,8 @@ def check_config_file():
 check_config_file()
 cf = configparser.ConfigParser()
 cf.read(config_file)
-
+check_and_create_dir(join(config_dir,"data/image/netico"))
+check_and_create_dir(join(config_dir,"data/image/sysico"))
 def get_option_value(key):
     return cf.get("global", key)
 def get_option_boolean(key):

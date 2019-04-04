@@ -37,13 +37,14 @@ class launch_item(QWidget):
             
 #             self.setMinimumSize(QSize(200, 100))
             item_size = get_option_int("item_size")
-            self.setMaximumSize(QSize(item_size, item_size))
+            self.setFixedSize(QSize(item_size, item_size))
             
             self.pushButton = QPushButton(self)
 #             允许拖放
-            self.setAcceptDrops(True)
-            self.pushButton.setAcceptDrops(True)
-#             self.pushButton.setDragEnabled(True)
+            if item["type"] == 3:
+                self.setAcceptDrops(True)
+#             self.pushButton.setAcceptDrops(True)
+#             self.setDragEnabled(True)
             if not item["ico"]:
                 self.set_icon(get_file_realpath('data/image/firefox64.png'))
             else :
@@ -73,9 +74,20 @@ class launch_item(QWidget):
             dse.setOffset(0,0);
             self.label.setGraphicsEffect(dse);
             
-            self.label.setAlignment(Qt.AlignCenter)
+#             self.label.setAlignment(Qt.AlignCenter)
+#             sizePolicy=QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding);
+#             sizePolicy.setHorizontalStretch(0);
+#             sizePolicy.setVerticalStretch(0);
+#             sizePolicy.setHeightForWidth(self.label.sizePolicy().hasHeightForWidth());
+#             self.label.setSizePolicy(sizePolicy);
+#             self.label.setAlignment(Qt.AlignTop)
             self.label.setWordWrap(True)
-            self.label.setText(item["name"])
+#             self.label.adjustSize()
+#             self.label.setScaledContents(True)
+            if len(item["name"]) >9 :
+                self.label.setText(item["name"][:9] + "\n" + item["name"][9:])
+            else:
+                self.label.setText(item["name"]+ " \n ")
             
             self.verticalLayout = QVBoxLayout(self)
             self.verticalLayout.addWidget(self.pushButton,5,Qt.AlignCenter)
@@ -154,42 +166,38 @@ class launch_item(QWidget):
                 if not os.path.exists(item["ico"]):
                     item["ico"] = get_file_realpath("data/image/firefox64.png")
         def mousePresseEvent(self, event):
-            if event.buttons() != Qt.LeftButton :
-                return
             print("on mousePresseEvent")
-            drag = QDrag()
-            mimedata = QMimeData()
-            mimedata.setText('aaa')#放入数据
-            drag.setMimeData(mimedata)
-            drag.exec_() #exec()函数并不会阻塞主函数
         def mouseMoveEvent(self, e):
             if e.buttons() != Qt.LeftButton:
                 return
-            print("哦牛")
 #             position = e.pos()
 #             self.move(position)
-            mimeData = QMimeData()
     
-            drag = QDrag(self)
+            mimeData = QMimeData()
             mimeData.setImageData(self)
+            drag = QDrag(self)
             drag.setMimeData(mimeData)
             drag.setHotSpot(e.pos() - self.rect().topLeft())
     
             dropAcion = drag.exec_(Qt.MoveAction)
         def dragEnterEvent(self, event):
-            event.acceptProposedAction()
+            launch_item = event.mimeData().imageData()
+            item_data = launch_item.item
+            print("dropEvent" ,item_data)
+            if item_data["type"] != 3:
+                event.acceptProposedAction()
+            else : 
+                event.ignore()
             print("on dragEnterEvent")
 
         def dropEvent(self, event):
             launch_item = event.mimeData().imageData()
             item_data = launch_item.item
-            print(item_data)
-            if item_data["type"] != 3:
-                item_data["catelog_id"] = self.item["id"]
-                app_data.update_launch_item(item_data)
-                launch_item.setParent(None)
+            item_data["catelog_id"] = self.item["id"]
+            app_data.update_launch_item(item_data)
+#                 launch_item.setParent(None)
+            launch_item.hide()
             
             print("on dropEvent")
             event.setDropAction(Qt.MoveAction)
             event.accept()
-            #To Do
